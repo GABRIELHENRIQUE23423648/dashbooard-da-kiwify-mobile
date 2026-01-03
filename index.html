@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Kiwify 2.0 • Mobile</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#0f1115;
+  --card:#161a22;
+  --text:#ffffff;
+  --muted:#9aa4b2;
+  --green:#2ecc71;
+  --red:#e74c3c;
+  --blue:#4f8cff;
+}
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Inter;
+}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+}
+
+/* ===== MOBILE HEADER ===== */
+header{
+  background:#0c0e13;
+  padding:15px;
+  text-align:center;
+  font-weight:700;
+  color:var(--blue);
+}
+
+/* ===== NAV MOBILE ===== */
+nav{
+  display:flex;
+  justify-content:space-around;
+  background:#0c0e13;
+  position:fixed;
+  bottom:0;
+  width:100%;
+}
+
+nav button{
+  flex:1;
+  padding:12px;
+  background:none;
+  border:none;
+  color:#fff;
+  font-size:14px;
+}
+
+/* ===== CONTENT ===== */
+.content{
+  padding:15px;
+  padding-bottom:80px;
+}
+
+.page{display:none}
+.page.active{display:block}
+
+/* ===== CARDS ===== */
+.cards{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.card{
+  background:var(--card);
+  padding:16px;
+  border-radius:12px;
+}
+
+.card span{
+  color:var(--muted);
+  font-size:13px;
+}
+
+.card h3{
+  margin-top:6px;
+  font-size:20px;
+}
+
+/* ===== INPUTS ===== */
+input,select{
+  width:100%;
+  margin-top:12px;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #222;
+  background:#0f1115;
+  color:#fff;
+  font-size:15px;
+}
+
+/* ===== BUTTONS ===== */
+.btn{
+  width:100%;
+  margin-top:15px;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  background:var(--blue);
+  color:#fff;
+  font-size:15px;
+}
+
+.btn.red{background:var(--red)}
+
+/* ===== DESKTOP ===== */
+@media(min-width:768px){
+  nav{
+    position:relative;
+  }
+
+  .cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>Kiwify 2.0</header>
+
+<div class="content">
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="page active">
+  <div class="cards">
+
+    <div class="card">
+      <span>Saldo disponível</span>
+      <h3 id="saldo">R$ 0,00</h3>
+    </div>
+
+    <div class="card">
+      <span>Total faturado</span>
+      <h3 id="faturado">R$ 0,00</h3>
+    </div>
+
+    <div class="card">
+      <span>Faturamento do dia</span>
+      <h3 id="faturadoDia">R$ 0,00</h3>
+    </div>
+
+    <div class="card">
+      <span>Total de vendas</span>
+      <h3 id="vendasTotal">0</h3>
+    </div>
+
+    <div class="card">
+      <span>Vendas do dia</span>
+      <h3 id="vendasDia">0</h3>
+    </div>
+
+  </div>
+
+  <button class="btn red" onclick="resetarDia()">Resetar dia</button>
+  <button class="btn red" onclick="resetarFaturado()">Resetar total faturado</button>
+</div>
+
+<!-- VENDAS -->
+<div id="vendas" class="page">
+  <h2>Adicionar venda</h2>
+
+  <input id="valorVenda" type="number" placeholder="Valor da venda (R$)">
+  <input id="quantidadeVenda" type="number" placeholder="Quantidade">
+
+  <select id="statusVenda">
+    <option value="aprovado">Aprovado</option>
+    <option value="pendente">Pendente</option>
+  </select>
+
+  <button class="btn" onclick="adicionarVenda()">Adicionar</button>
+</div>
+
+<!-- SAQUE -->
+<div id="saque" class="page">
+  <h2>Saque PIX</h2>
+
+  <input id="valorSaque" placeholder="Valor do saque">
+  <button class="btn" onclick="sacar()">Solicitar saque</button>
+
+  <p id="msgSaque"></p>
+</div>
+
+</div>
+
+<!-- NAV -->
+<nav>
+  <button onclick="showPage('dashboard')">🏠</button>
+  <button onclick="showPage('vendas')">➕</button>
+  <button onclick="showPage('saque')">💸</button>
+</nav>
+
+<script>
+let dados = JSON.parse(localStorage.getItem("kiwifyMobile")) || {
+  saldo:0,
+  faturado:0,
+  faturadoDia:0,
+  vendas:0,
+  vendasDia:0,
+  pendente:0
+};
+
+function salvar(){
+  localStorage.setItem("kiwifyMobile",JSON.stringify(dados));
+  atualizar();
+}
+
+function atualizar(){
+  saldo.innerText = `R$ ${dados.saldo.toFixed(2)}`;
+  faturado.innerText = `R$ ${dados.faturado.toFixed(2)}`;
+  faturadoDia.innerText = `R$ ${dados.faturadoDia.toFixed(2)}`;
+  vendasTotal.innerText = dados.vendas;
+  vendasDia.innerText = dados.vendasDia;
+  saldo.style.color = dados.saldo < 0 ? "var(--red)" : "var(--green)";
+}
+
+function showPage(id){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function adicionarVenda(){
+  let valor = parseFloat(valorVenda.value);
+  let qtd = parseInt(quantidadeVenda.value);
+  let status = statusVenda.value;
+
+  if(valor<=0 || qtd<=0) return alert("Preencha corretamente");
+
+  let total = valor * qtd;
+
+  dados.vendas += qtd;
+  dados.vendasDia += qtd;
+  dados.faturado += total;
+  dados.faturadoDia += total;
+
+  if(status==="aprovado") dados.saldo += total;
+  else dados.pendente += total;
+
+  valorVenda.value="";
+  quantidadeVenda.value="";
+  salvar();
+}
+
+function sacar(){
+  let v = parseFloat(valorSaque.value);
+  if(v<=0 || v>dados.saldo){
+    msgSaque.innerText="Saldo insuficiente";
+    msgSaque.style.color="red";
+    return;
+  }
+
+  msgSaque.innerText="Processando...";
+  msgSaque.style.color="orange";
+
+  setTimeout(()=>{
+    dados.saldo -= v;
+    msgSaque.innerText="Saque realizado";
+    msgSaque.style.color="green";
+    valorSaque.value="";
+    salvar();
+  },5000);
+}
+
+function resetarDia(){
+  if(confirm("Resetar o dia?")){
+    dados.vendasDia = 0;
+    dados.faturadoDia = 0;
+    salvar();
+  }
+}
+
+function resetarFaturado(){
+  if(confirm("Resetar o TOTAL faturado?")){
+    dados.faturado = 0;
+    salvar();
+  }
+}
+
+atualizar();
+</script>
+
+</body>
+</html>
