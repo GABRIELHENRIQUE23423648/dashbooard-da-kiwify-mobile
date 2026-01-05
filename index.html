@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Kiwify 2.0 • Mobile</title>
+<title>Kiwify 2.1 • Mobile</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -17,20 +17,9 @@
   --red:#e74c3c;
   --blue:#4f8cff;
 }
+*{margin:0;padding:0;box-sizing:border-box;font-family:Inter}
+body{background:var(--bg);color:var(--text)}
 
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:Inter;
-}
-
-body{
-  background:var(--bg);
-  color:var(--text);
-}
-
-/* ===== MOBILE HEADER ===== */
 header{
   background:#0c0e13;
   padding:15px;
@@ -39,7 +28,6 @@ header{
   color:var(--blue);
 }
 
-/* ===== NAV MOBILE ===== */
 nav{
   display:flex;
   justify-content:space-around;
@@ -55,10 +43,8 @@ nav button{
   background:none;
   border:none;
   color:#fff;
-  font-size:14px;
 }
 
-/* ===== CONTENT ===== */
 .content{
   padding:15px;
   padding-bottom:80px;
@@ -67,7 +53,6 @@ nav button{
 .page{display:none}
 .page.active{display:block}
 
-/* ===== CARDS ===== */
 .cards{
   display:flex;
   flex-direction:column;
@@ -80,17 +65,9 @@ nav button{
   border-radius:12px;
 }
 
-.card span{
-  color:var(--muted);
-  font-size:13px;
-}
+.card span{color:var(--muted);font-size:13px}
+.card h3{margin-top:6px;font-size:20px}
 
-.card h3{
-  margin-top:6px;
-  font-size:20px;
-}
-
-/* ===== INPUTS ===== */
 input,select{
   width:100%;
   margin-top:12px;
@@ -99,10 +76,8 @@ input,select{
   border:1px solid #222;
   background:#0f1115;
   color:#fff;
-  font-size:15px;
 }
 
-/* ===== BUTTONS ===== */
 .btn{
   width:100%;
   margin-top:15px;
@@ -111,28 +86,22 @@ input,select{
   border-radius:12px;
   background:var(--blue);
   color:#fff;
-  font-size:15px;
 }
-
 .btn.red{background:var(--red)}
 
-/* ===== DESKTOP ===== */
 @media(min-width:768px){
-  nav{
-    position:relative;
-  }
-
   .cards{
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
   }
+  nav{position:relative}
 }
 </style>
 </head>
 
 <body>
 
-<header>Kiwify 2.0</header>
+<header>Kiwify 2.1</header>
 
 <div class="content">
 
@@ -166,9 +135,6 @@ input,select{
     </div>
 
   </div>
-
-  <button class="btn red" onclick="resetarDia()">Resetar dia</button>
-  <button class="btn red" onclick="resetarFaturado()">Resetar total faturado</button>
 </div>
 
 <!-- VENDAS -->
@@ -198,7 +164,6 @@ input,select{
 
 </div>
 
-<!-- NAV -->
 <nav>
   <button onclick="showPage('dashboard')">🏠</button>
   <button onclick="showPage('vendas')">➕</button>
@@ -206,17 +171,18 @@ input,select{
 </nav>
 
 <script>
-let dados = JSON.parse(localStorage.getItem("kiwifyMobile")) || {
+let dados = JSON.parse(localStorage.getItem("kiwifyAuto")) || {
   saldo:0,
   faturado:0,
   faturadoDia:0,
   vendas:0,
   vendasDia:0,
-  pendente:0
+  pendente:0,
+  ultimoDia:null
 };
 
 function salvar(){
-  localStorage.setItem("kiwifyMobile",JSON.stringify(dados));
+  localStorage.setItem("kiwifyAuto",JSON.stringify(dados));
   atualizar();
 }
 
@@ -226,7 +192,6 @@ function atualizar(){
   faturadoDia.innerText = `R$ ${dados.faturadoDia.toFixed(2)}`;
   vendasTotal.innerText = dados.vendas;
   vendasDia.innerText = dados.vendasDia;
-  saldo.style.color = dados.saldo < 0 ? "var(--red)" : "var(--green)";
 }
 
 function showPage(id){
@@ -234,7 +199,21 @@ function showPage(id){
   document.getElementById(id).classList.add("active");
 }
 
+/* ===== RESET AUTOMÁTICO 00:00 ===== */
+function verificarViradaDia(){
+  const hoje = new Date().toDateString();
+
+  if(dados.ultimoDia !== hoje){
+    dados.ultimoDia = hoje;
+    dados.vendasDia = 0;
+    dados.faturadoDia = 0;
+    salvar();
+  }
+}
+
 function adicionarVenda(){
+  verificarViradaDia();
+
   let valor = parseFloat(valorVenda.value);
   let qtd = parseInt(quantidadeVenda.value);
   let status = statusVenda.value;
@@ -276,23 +255,11 @@ function sacar(){
   },5000);
 }
 
-function resetarDia(){
-  if(confirm("Resetar o dia?")){
-    dados.vendasDia = 0;
-    dados.faturadoDia = 0;
-    salvar();
-  }
-}
-
-function resetarFaturado(){
-  if(confirm("Resetar o TOTAL faturado?")){
-    dados.faturado = 0;
-    salvar();
-  }
-}
-
+/* Checa virada do dia ao abrir */
+verificarViradaDia();
 atualizar();
 </script>
 
 </body>
 </html>
+
