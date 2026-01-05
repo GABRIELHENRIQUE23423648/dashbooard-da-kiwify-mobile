@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Kiwify 2.1 • Mobile</title>
+<title>Kiwify 4.0 • Calendário</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -11,7 +11,7 @@
 :root{
   --bg:#0f1115;
   --card:#161a22;
-  --text:#ffffff;
+  --text:#fff;
   --muted:#9aa4b2;
   --green:#2ecc71;
   --red:#e74c3c;
@@ -47,41 +47,35 @@ nav button{
 
 .content{
   padding:15px;
-  padding-bottom:80px;
+  padding-bottom:100px;
 }
 
 .page{display:none}
 .page.active{display:block}
 
-.cards{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-
 .card{
   background:var(--card);
   padding:16px;
   border-radius:12px;
+  margin-bottom:12px;
 }
 
 .card span{color:var(--muted);font-size:13px}
-.card h3{margin-top:6px;font-size:20px}
 
 input,select{
   width:100%;
-  margin-top:12px;
   padding:12px;
+  margin-top:10px;
   border-radius:10px;
-  border:1px solid #222;
   background:#0f1115;
+  border:1px solid #222;
   color:#fff;
 }
 
 .btn{
   width:100%;
-  margin-top:15px;
   padding:14px;
+  margin-top:10px;
   border:none;
   border-radius:12px;
   background:var(--blue);
@@ -89,109 +83,84 @@ input,select{
 }
 .btn.red{background:var(--red)}
 
-@media(min-width:768px){
-  .cards{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  }
-  nav{position:relative}
+.calendario{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:6px;
+}
+
+.dia{
+  background:#0f1115;
+  padding:10px;
+  text-align:center;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:14px;
+}
+.dia:hover{background:var(--blue)}
+
+.editor{
+  background:var(--card);
+  padding:15px;
+  border-radius:12px;
+  margin-top:15px;
 }
 </style>
 </head>
 
 <body>
 
-<header>Kiwify 2.1</header>
+<header>Kiwify 4.0</header>
 
 <div class="content">
 
-<!-- DASHBOARD -->
-<div id="dashboard" class="page active">
-  <div class="cards">
+<!-- CALENDÁRIO -->
+<div id="calendario" class="page active">
+  <h3>Calendário</h3>
 
-    <div class="card">
-      <span>Saldo disponível</span>
-      <h3 id="saldo">R$ 0,00</h3>
-    </div>
-
-    <div class="card">
-      <span>Total faturado</span>
-      <h3 id="faturado">R$ 0,00</h3>
-    </div>
-
-    <div class="card">
-      <span>Faturamento do dia</span>
-      <h3 id="faturadoDia">R$ 0,00</h3>
-    </div>
-
-    <div class="card">
-      <span>Total de vendas</span>
-      <h3 id="vendasTotal">0</h3>
-    </div>
-
-    <div class="card">
-      <span>Vendas do dia</span>
-      <h3 id="vendasDia">0</h3>
-    </div>
-
-  </div>
-</div>
-
-<!-- VENDAS -->
-<div id="vendas" class="page">
-  <h2>Adicionar venda</h2>
-
-  <input id="valorVenda" type="number" placeholder="Valor da venda (R$)">
-  <input id="quantidadeVenda" type="number" placeholder="Quantidade">
-
-  <select id="statusVenda">
-    <option value="aprovado">Aprovado</option>
-    <option value="pendente">Pendente</option>
+  <select id="mesSelect" onchange="renderCalendario()">
+    <option value="0">Janeiro</option>
+    <option value="1">Fevereiro</option>
+    <option value="2">Março</option>
+    <option value="3">Abril</option>
+    <option value="4">Maio</option>
+    <option value="5">Junho</option>
+    <option value="6">Julho</option>
+    <option value="7">Agosto</option>
+    <option value="8">Setembro</option>
+    <option value="9">Outubro</option>
+    <option value="10">Novembro</option>
+    <option value="11">Dezembro</option>
   </select>
 
-  <button class="btn" onclick="adicionarVenda()">Adicionar</button>
-</div>
+  <div class="calendario" id="dias"></div>
 
-<!-- SAQUE -->
-<div id="saque" class="page">
-  <h2>Saque PIX</h2>
+  <div class="editor" id="editorDia" style="display:none">
+    <strong id="dataSelecionada"></strong>
 
-  <input id="valorSaque" placeholder="Valor do saque">
-  <button class="btn" onclick="sacar()">Solicitar saque</button>
+    <input id="editFaturado" type="number" placeholder="Faturamento do dia">
+    <input id="editVendas" type="number" placeholder="Vendas do dia">
 
-  <p id="msgSaque"></p>
+    <button class="btn" onclick="salvarEdicao()">Salvar alterações</button>
+    <button class="btn red" onclick="resetarDiaSelecionado()">Resetar esse dia</button>
+  </div>
 </div>
 
 </div>
 
 <nav>
-  <button onclick="showPage('dashboard')">🏠</button>
-  <button onclick="showPage('vendas')">➕</button>
-  <button onclick="showPage('saque')">💸</button>
+  <button onclick="showPage('calendario')">📅</button>
 </nav>
 
 <script>
-let dados = JSON.parse(localStorage.getItem("kiwifyAuto")) || {
-  saldo:0,
-  faturado:0,
-  faturadoDia:0,
-  vendas:0,
-  vendasDia:0,
-  pendente:0,
-  ultimoDia:null
+let dados = JSON.parse(localStorage.getItem("kiwifyCalendario")) || {
+  historico:{}
 };
 
-function salvar(){
-  localStorage.setItem("kiwifyAuto",JSON.stringify(dados));
-  atualizar();
-}
+let dataAtualEdit = null;
 
-function atualizar(){
-  saldo.innerText = `R$ ${dados.saldo.toFixed(2)}`;
-  faturado.innerText = `R$ ${dados.faturado.toFixed(2)}`;
-  faturadoDia.innerText = `R$ ${dados.faturadoDia.toFixed(2)}`;
-  vendasTotal.innerText = dados.vendas;
-  vendasDia.innerText = dados.vendasDia;
+function salvar(){
+  localStorage.setItem("kiwifyCalendario",JSON.stringify(dados));
 }
 
 function showPage(id){
@@ -199,67 +168,54 @@ function showPage(id){
   document.getElementById(id).classList.add("active");
 }
 
-/* ===== RESET AUTOMÁTICO 00:00 ===== */
-function verificarViradaDia(){
-  const hoje = new Date().toDateString();
+function renderCalendario(){
+  const mes = mesSelect.value;
+  const ano = new Date().getFullYear();
+  dias.innerHTML = "";
 
-  if(dados.ultimoDia !== hoje){
-    dados.ultimoDia = hoje;
-    dados.vendasDia = 0;
-    dados.faturadoDia = 0;
-    salvar();
+  const totalDias = new Date(ano, Number(mes)+1, 0).getDate();
+
+  for(let d=1; d<=totalDias; d++){
+    const data = `${ano}-${String(Number(mes)+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const div = document.createElement("div");
+    div.className="dia";
+    div.innerText=d;
+    div.onclick=()=>abrirDia(data);
+    dias.appendChild(div);
   }
 }
 
-function adicionarVenda(){
-  verificarViradaDia();
+function abrirDia(data){
+  dataAtualEdit = data;
+  const info = dados.historico[data] || {faturado:0,vendas:0};
 
-  let valor = parseFloat(valorVenda.value);
-  let qtd = parseInt(quantidadeVenda.value);
-  let status = statusVenda.value;
+  dataSelecionada.innerText = `Dia ${data}`;
+  editFaturado.value = info.faturado;
+  editVendas.value = info.vendas;
+  editorDia.style.display="block";
+}
 
-  if(valor<=0 || qtd<=0) return alert("Preencha corretamente");
-
-  let total = valor * qtd;
-
-  dados.vendas += qtd;
-  dados.vendasDia += qtd;
-  dados.faturado += total;
-  dados.faturadoDia += total;
-
-  if(status==="aprovado") dados.saldo += total;
-  else dados.pendente += total;
-
-  valorVenda.value="";
-  quantidadeVenda.value="";
+function salvarEdicao(){
+  dados.historico[dataAtualEdit] = {
+    faturado:+editFaturado.value,
+    vendas:+editVendas.value
+  };
   salvar();
+  alert("Dia atualizado!");
 }
 
-function sacar(){
-  let v = parseFloat(valorSaque.value);
-  if(v<=0 || v>dados.saldo){
-    msgSaque.innerText="Saldo insuficiente";
-    msgSaque.style.color="red";
-    return;
-  }
-
-  msgSaque.innerText="Processando...";
-  msgSaque.style.color="orange";
-
-  setTimeout(()=>{
-    dados.saldo -= v;
-    msgSaque.innerText="Saque realizado";
-    msgSaque.style.color="green";
-    valorSaque.value="";
+function resetarDiaSelecionado(){
+  if(confirm("Resetar esse dia?")){
+    dados.historico[dataAtualEdit] = {faturado:0,vendas:0};
     salvar();
-  },5000);
+    editFaturado.value=0;
+    editVendas.value=0;
+  }
 }
 
-/* Checa virada do dia ao abrir */
-verificarViradaDia();
-atualizar();
+mesSelect.value = new Date().getMonth();
+renderCalendario();
 </script>
 
 </body>
 </html>
-
